@@ -12,7 +12,14 @@ export const metadata: Metadata = {
   title: "CollegeHub — Your Campus, Connected",
   description:
     "The complete digital ecosystem for your college. Notices, events, notes, marketplace, and more.",
-  manifest: "/manifest.json",
+  manifest: "/collegehub/manifest.json",
+  themeColor: "#8b5cf6",
+  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "CollegeHub",
+  },
 };
 
 export default function RootLayout({

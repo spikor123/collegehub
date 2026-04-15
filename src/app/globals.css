@@ -88,6 +88,16 @@
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "rlig" 1, "calt" 1;
+    /* Prevent mobile horizontal scroll and enable smooth vertical bounce only */
+    overflow-x: hidden;
+    overscroll-behavior-y: none;
+    /* Native tap highlighting removal */
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Optimize inputs for mobile to prevent auto-zoom */
+  input, select, textarea {
+    font-size: 16px !important;
   }
 
   /* Custom scrollbar for dark theme */
@@ -130,13 +140,32 @@
   }
 }
 
-@keyframes animate-in {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
+  @keyframes animate-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
-  to {
-    opacity: 1;
-    transform: translateY(0);
+
+  /* Support for iOS Safe Area */
+  .safe-p-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
   }
-}
+
+  .safe-p-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .mobile-card-grid {
+    @apply grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3;
+  }
+
+  /* Active/Tap state for buttons on mobile */
+  .active-scale:active {
+    transform: scale(0.96);
+    transition: transform 0.1s ease;
+  }
