@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { useAuthStore } from "@/lib/store";
 import {
   Dialog,
   DialogContent,
@@ -93,6 +94,7 @@ const departments = ["All", "CSE", "Applied Sciences"];
 const semesters = [0, 3, 4, 5]; // 0 = All
 
 export default function NotesPage() {
+  const { role } = useAuthStore();
   const [notes, setNotes] = useState<Note[]>(initialNotes);
   const [searchQuery, setSearchQuery] = useState("");
   const [activeDept, setActiveDept] = useState("All");
@@ -188,14 +190,16 @@ export default function NotesPage() {
           </p>
         </div>
 
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button size="sm" className="gap-1.5 active-scale">
-              <Upload className="h-4 w-4" />
-              Upload PDF
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-[425px] overflow-hidden">
+        {/* Only Faculty/Admin can upload study resources */}
+        {(role === "teacher" || role === "admin") && (
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button size="sm" className="gap-1.5 active-scale">
+                <Upload className="h-4 w-4" />
+                Upload PDF
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px] overflow-hidden">
             <DialogHeader>
               <DialogTitle>Upload Study Notes</DialogTitle>
               <DialogDescription>
