@@ -13,6 +13,9 @@ import {
   User,
   Filter,
   BookOpen,
+  Upload,
+  Loader2,
+  X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -151,9 +154,9 @@ export default function AssignmentsPage() {
   const [assignments, setAssignments] = useState<Assignment[]>(initialAssignments);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  
+  // Faculty form
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  // New assignment form state
   const [newTitle, setNewTitle] = useState("");
   const [newSubject, setNewSubject] = useState("");
   const [newCode, setNewCode] = useState("");
@@ -161,6 +164,12 @@ export default function AssignmentsPage() {
   const [newDeadline, setNewDeadline] = useState("");
   const [newMarks, setNewMarks] = useState("20");
   const [newPriority, setNewPriority] = useState<"high" | "medium" | "low">("medium");
+
+  // Student submission form
+  const [submitDialogOpen, setSubmitDialogOpen] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitProgress, setSubmitProgress] = useState(0);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const pendingCount = assignments.filter((a) => a.status === "pending").length;
   const overdueCount = assignments.filter((a) => a.status === "overdue").length;
@@ -191,8 +200,6 @@ export default function AssignmentsPage() {
 
     setAssignments([newAssignment, ...assignments]);
     setIsDialogOpen(false);
-    
-    // Reset form
     setNewTitle("");
     setNewSubject("");
     setNewCode("");
@@ -201,8 +208,31 @@ export default function AssignmentsPage() {
     setNewMarks("20");
   };
 
+  const handleSubmission = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedFile) return;
+
+    setIsSubmitting(true);
+    setSubmitProgress(0);
+
+    for (let i = 0; i <= 100; i += 25) {
+      setSubmitProgress(i);
+      await new Promise(r => setTimeout(r, 400));
+    }
+
+    setAssignments(assignments.map(a => 
+      a.id === submitDialogOpen ? { ...a, status: "submitted" as const, attachments: a.attachments + 1 } : a
+    ));
+
+    setTimeout(() => {
+      setIsSubmitting(false);
+      setSubmitDialogOpen(null);
+      setSelectedFile(null);
+    }, 500);
+  };
+
   return (
-    <div className="space-y-6 animate-in">
+    <div className="space-y-6 animate-in pb-10">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Assignments</h1>
@@ -211,11 +241,10 @@ export default function AssignmentsPage() {
           </p>
         </div>
         
-        {/* Only show Add Assignment button for faculty/admin */}
         {(role === "teacher" || role === "admin") && (
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button size="sm" className="gap-1.5">
+              <Button size="sm" className="gap-1.5 active-scale">
                 <Plus className="h-4 w-4" />
                 Add Assignment
               </Button>
@@ -224,97 +253,29 @@ export default function AssignmentsPage() {
               <DialogHeader>
                 <DialogTitle>Create New Assignment</DialogTitle>
                 <DialogDescription>
-                  Post a new assignment to the student portal. Students will be notified immediately.
+                  Post a new assignment to the student portal.
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handleAddAssignment} className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Assignment Title</Label>
-                  <Input 
-                    id="title" 
-                    placeholder="e.g. Lab 5 Report" 
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    required
-                  />
+                  <Label>Title</Label>
+                  <Input value={newTitle} onChange={(e) => setNewTitle(e.target.value)} required />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="subject">Subject Name</Label>
-                    <Input 
-                      id="subject" 
-                      placeholder="Operating Systems" 
-                      value={newSubject}
-                      onChange={(e) => setNewSubject(e.target.value)}
-                      required
-                    />
+                    <Label>Subject</Label>
+                    <Input value={newSubject} onChange={(e) => setNewSubject(e.target.value)} required />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="code">Subject Code</Label>
-                    <Input 
-                      id="code" 
-                      placeholder="CS303" 
-                      value={newCode}
-                      onChange={(e) => setNewCode(e.target.value)}
-                      required
-                    />
+                    <Label>Code</Label>
+                    <Input value={newCode} onChange={(e) => setNewCode(e.target.value)} required />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="desc">Description</Label>
-                  <Input 
-                    id="desc" 
-                    placeholder="Detailed instructions..." 
-                    value={newDesc}
-                    onChange={(e) => setNewDesc(e.target.value)}
-                    required
-                  />
+                  <Label>Description</Label>
+                  <Input value={newDesc} onChange={(e) => setNewDesc(e.target.value)} required />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="deadline">Deadline</Label>
-                    <Input 
-                      id="deadline" 
-                      placeholder="e.g. Tomorrow, 5 PM" 
-                      value={newDeadline}
-                      onChange={(e) => setNewDeadline(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="marks">Max Marks</Label>
-                    <Input 
-                      id="marks" 
-                      type="number" 
-                      value={newMarks}
-                      onChange={(e) => setNewMarks(e.target.value)}
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Priority</Label>
-                  <div className="flex gap-2">
-                    {(["low", "medium", "high"] as const).map((p) => (
-                      <button
-                        key={p}
-                        type="button"
-                        onClick={() => setNewPriority(p)}
-                        className={`flex-1 rounded-md border py-1.5 text-xs font-medium capitalize transition-colors ${
-                          newPriority === p
-                            ? `bg-primary/10 text-primary border-primary/50`
-                            : "border-border text-muted-foreground hover:bg-accent"
-                        }`}
-                      >
-                        {p}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <DialogFooter className="pt-4">
-                  <Button type="button" variant="ghost" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-                  <Button type="submit">Publish Assignment</Button>
-                </DialogFooter>
+                <Button type="submit" className="w-full">Publish Assignment</Button>
               </form>
             </DialogContent>
           </Dialog>
@@ -323,66 +284,44 @@ export default function AssignmentsPage() {
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-3">
-        <Card className="border-border/50">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-500/10">
-              <Clock className="h-5 w-5 text-amber-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{pendingCount}</p>
-              <p className="text-xs text-muted-foreground">Pending</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-red-500/10">
-              <AlertCircle className="h-5 w-5 text-red-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{overdueCount}</p>
-              <p className="text-xs text-muted-foreground">Overdue</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="border-border/50">
-          <CardContent className="flex items-center gap-3 p-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10">
-              <CheckCircle2 className="h-5 w-5 text-emerald-400" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold">{submittedCount}</p>
-              <p className="text-xs text-muted-foreground">Completed</p>
-            </div>
-          </CardContent>
-        </Card>
+        {[
+          { label: "Pending", value: pendingCount, icon: Clock, color: "text-amber-400", bg: "bg-amber-500/10" },
+          { label: "Overdue", value: overdueCount, icon: AlertCircle, color: "text-red-400", bg: "bg-red-500/10" },
+          { label: "Completed", value: submittedCount, icon: CheckCircle2, color: "text-emerald-400", bg: "bg-emerald-500/10" },
+        ].map((stat) => (
+          <Card key={stat.label} className="border-border/50">
+            <CardContent className="flex items-center gap-3 p-4">
+              <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stat.bg}`}>
+                <stat.icon className={`h-5 w-5 ${stat.color}`} />
+              </div>
+              <div className="min-w-0">
+                <p className="text-xl font-bold">{stat.value}</p>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground truncate">{stat.label}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Status Filters */}
-      <div className="flex flex-wrap gap-2">
-        {[
-          { key: "all", label: "All" },
-          { key: "pending", label: "Pending" },
-          { key: "overdue", label: "Overdue" },
-          { key: "submitted", label: "Submitted" },
-          { key: "graded", label: "Graded" },
-        ].map((f) => (
+      <div className="flex flex-wrap gap-1.5">
+        {["all", "pending", "overdue", "submitted", "graded"].map((f) => (
           <button
-            key={f.key}
-            onClick={() => setStatusFilter(f.key)}
-            className={`rounded-full border px-3.5 py-1.5 text-xs font-medium transition-all duration-200 ${
-              statusFilter === f.key
+            key={f}
+            onClick={() => setStatusFilter(f)}
+            className={`rounded-full border px-4 py-1.5 text-xs font-semibold capitalize transition-all duration-200 ${
+              statusFilter === f
                 ? "border-primary/50 bg-primary/10 text-primary"
-                : "border-border text-muted-foreground hover:bg-accent hover:text-foreground"
+                : "border-border text-muted-foreground hover:bg-accent"
             }`}
           >
-            {f.label}
+            {f}
           </button>
         ))}
       </div>
 
       {/* Assignments list */}
-      <div className="space-y-3">
+      <div className="space-y-4">
         {filtered.map((assignment, idx) => {
           const config = statusConfig[assignment.status];
           const isExpanded = expandedId === assignment.id;
@@ -390,111 +329,149 @@ export default function AssignmentsPage() {
           return (
             <Card
               key={assignment.id}
-              className={`border-border/50 overflow-hidden transition-all duration-300 hover:border-border ${config.border}`}
+              className={`border-border/50 overflow-hidden transition-all duration-300 hover:border-border hover:shadow-lg hover:shadow-primary/5 ${config.border}`}
               style={{
                 animationDelay: `${idx * 60}ms`,
                 animation: "animate-in 0.4s ease-out both",
               }}
             >
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  {/* Status icon */}
-                  <div
-                    className={`mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ${config.bg}`}
-                  >
-                    <config.icon className={`h-4 w-4 ${config.color}`} />
-                  </div>
+              <CardContent className="p-0">
+                <div className="flex flex-col">
+                  {/* Top Bar for status */}
+                  <div className={`flex h-1 text-[10px] w-full ${config.bg.replace('/10', '')}`} />
+                  
+                  <div className="p-4">
+                    <div className="flex items-start gap-4">
+                      {/* Status icon circle */}
+                      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${config.bg} border-2 ${config.border}`}>
+                        <config.icon className={`h-5 w-5 ${config.color}`} />
+                      </div>
 
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-start justify-between gap-2">
                       <div className="min-w-0 flex-1">
-                        <button
-                          onClick={() => setExpandedId(isExpanded ? null : assignment.id)}
-                          className="text-left"
-                        >
-                          <h3 className="text-sm font-semibold leading-snug hover:text-primary transition-colors">
-                            {assignment.title}
-                          </h3>
-                        </button>
-                        <p className="mt-0.5 text-xs text-muted-foreground">
-                          <span className="font-medium text-foreground/80">{assignment.subjectCode}</span>
-                          {" · "}
-                          {assignment.subject}
-                        </p>
-                      </div>
-
-                      <div className="flex shrink-0 items-center gap-2">
-                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${priorityColors[assignment.priority]}`}>
-                          {assignment.priority}
-                        </span>
-                        <span className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${config.bg} ${config.color} ${config.border}`}>
-                          {config.label}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Meta row */}
-                    <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {assignment.deadline}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <User className="h-3 w-3" />
-                        {assignment.professor}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <FileText className="h-3 w-3" />
-                        {assignment.submissionType}
-                      </span>
-                    </div>
-
-                    {/* Expanded details */}
-                    <div
-                      className={`mt-2.5 overflow-hidden transition-all duration-300 ${
-                        isExpanded ? "max-h-48" : "max-h-0"
-                      }`}
-                    >
-                      <p className="text-sm leading-relaxed text-muted-foreground">
-                        {assignment.description}
-                      </p>
-                      <div className="mt-3 flex gap-6 text-xs">
-                        <span>Max Marks: <strong className="text-foreground">{assignment.maxMarks}</strong></span>
-                        {assignment.obtainedMarks !== undefined && (
-                          <span>Obtained: <strong className="text-emerald-400">{assignment.obtainedMarks}/{assignment.maxMarks}</strong></span>
-                        )}
-                        {assignment.attachments > 0 && (
-                          <span>{assignment.attachments} attachment(s)</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Footer */}
-                    <div className="mt-2 flex items-center justify-between">
-                      {assignment.status === "graded" && assignment.obtainedMarks !== undefined ? (
-                        <div className="flex items-center gap-1.5">
-                          <div className="h-1.5 w-24 overflow-hidden rounded-full bg-accent">
-                            <div
-                              className="h-full rounded-full bg-emerald-400 transition-all duration-500"
-                              style={{ width: `${(assignment.obtainedMarks / assignment.maxMarks) * 100}%` }}
-                            />
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0 flex-1">
+                            <button
+                              onClick={() => setExpandedId(isExpanded ? null : assignment.id)}
+                              className="text-left group"
+                            >
+                              <h3 className="text-base font-bold leading-snug group-hover:text-primary transition-colors">
+                                {assignment.title}
+                              </h3>
+                              <p className="mt-0.5 text-xs text-muted-foreground font-medium">
+                                <span className="text-foreground/80">{assignment.subjectCode}</span> · {assignment.subject}
+                              </p>
+                            </button>
                           </div>
-                          <span className="text-xs font-semibold text-emerald-400">
-                            {Math.round((assignment.obtainedMarks / assignment.maxMarks) * 100)}%
-                          </span>
+                          
+                          <div className="flex flex-col items-end gap-1.5">
+                            <span className={`rounded-full px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider ${priorityColors[assignment.priority]}`}>
+                              {assignment.priority}
+                            </span>
+                          </div>
                         </div>
-                      ) : (
-                        <div />
-                      )}
-                      <button
-                        onClick={() => setExpandedId(isExpanded ? null : assignment.id)}
-                        className="flex items-center gap-0.5 text-xs text-primary hover:underline"
-                      >
-                        {isExpanded ? "Less" : "Details"}
-                        <ChevronDown
-                          className={`h-3 w-3 transition-transform duration-200 ${isExpanded ? "rotate-180" : ""}`}
-                        />
-                      </button>
+
+                        {/* Meta Grid */}
+                        <div className="mt-4 grid grid-cols-2 sm:grid-cols-3 gap-3">
+                           <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium">
+                              <Calendar className="h-3.5 w-3.5" />
+                              <span className={assignment.deadline.includes("Tomorrow") ? "text-red-400 font-bold" : ""}>{assignment.deadline}</span>
+                           </div>
+                           <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium">
+                              <User className="h-3.5 w-3.5" />
+                              <span className="truncate">{assignment.professor}</span>
+                           </div>
+                           <div className="flex items-center gap-2 text-[11px] text-muted-foreground font-medium col-span-2 sm:col-span-1">
+                              <FileText className="h-3.5 w-3.5" />
+                              <span>{assignment.submissionType}</span>
+                           </div>
+                        </div>
+
+                        {/* Expanded details */}
+                        <div
+                          className={`overflow-hidden transition-all duration-300 ${isExpanded ? "max-h-[500px] mt-4 opacity-100" : "max-h-0 opacity-0"}`}
+                        >
+                          <div className="p-3 bg-accent/40 rounded-xl border border-border/50">
+                            <h4 className="text-xs font-bold uppercase text-muted-foreground tracking-widest mb-2">Detailed Instructions</h4>
+                            <p className="text-sm leading-relaxed text-muted-foreground">
+                              {assignment.description}
+                            </p>
+                            <div className="mt-4 pt-4 border-t border-border/50 flex flex-wrap gap-4 text-xs font-bold">
+                              <span>MAX MARKS: <span className="text-primary">{assignment.maxMarks}</span></span>
+                              <span>STATUS: <span className={config.color}>{config.label.toUpperCase()}</span></span>
+                              <span>ATTACHMENTS: {assignment.attachments}</span>
+                            </div>
+                          </div>
+                          
+                          {/* Student Submission Button */}
+                          {role === "student" && assignment.status === "pending" && (
+                            <div className="mt-4">
+                               <Dialog open={submitDialogOpen === assignment.id} onOpenChange={(open) => setSubmitDialogOpen(open ? assignment.id : null)}>
+                                 <DialogTrigger asChild>
+                                    <Button className="w-full gap-2 active-scale" size="lg">
+                                       <Upload className="h-4 w-4" /> Submit PDF Solution
+                                    </Button>
+                                 </DialogTrigger>
+                                 <DialogContent className="sm:max-w-[400px]">
+                                    <DialogHeader>
+                                      <DialogTitle>Submit: {assignment.subjectCode}</DialogTitle>
+                                      <DialogDescription>
+                                        Upload your final PDF report for grading.
+                                      </DialogDescription>
+                                    </DialogHeader>
+                                    
+                                    <form onSubmit={handleSubmission} className="space-y-6 py-4">
+                                       <div className="border-2 border-dashed border-border rounded-2xl p-10 text-center hover:bg-accent/50 transition-colors relative group cursor-pointer">
+                                          <input 
+                                            type="file" 
+                                            accept=".pdf" 
+                                            className="absolute inset-0 opacity-0 cursor-pointer" 
+                                            onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
+                                          />
+                                          <Upload className="h-10 w-10 text-primary/40 mx-auto mb-3 group-hover:text-primary/60" />
+                                          <p className="text-sm font-bold">{selectedFile ? selectedFile.name : "Select PDF Assignment"}</p>
+                                          <p className="text-[10px] uppercase font-bold text-muted-foreground mt-2 tracking-widest">Maximum File Size: 20MB</p>
+                                       </div>
+
+                                       {isSubmitting && (
+                                         <div className="space-y-2">
+                                            <div className="flex justify-between text-xs font-bold">
+                                              <span className="flex items-center gap-2"><Loader2 className="h-3 w-3 animate-spin" /> Uploading...</span>
+                                              <span>{submitProgress}%</span>
+                                            </div>
+                                            <div className="h-2 w-full bg-accent rounded-full overflow-hidden">
+                                               <div className="h-full bg-primary transition-all duration-500" style={{ width: `${submitProgress}%` }} />
+                                            </div>
+                                         </div>
+                                       )}
+
+                                       <Button type="submit" className="w-full h-12" disabled={!selectedFile || isSubmitting}>
+                                          {isSubmitting ? "Processing..." : "Submit to Professor"}
+                                       </Button>
+                                    </form>
+                                 </DialogContent>
+                               </Dialog>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Footer Toggle */}
+                        <div className="mt-4 flex items-center justify-between border-t border-border/50 pt-3">
+                          <div className="flex items-center gap-2">
+                             {assignment.status === "graded" && (
+                                <span className="text-xs font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md">
+                                  Grade: {assignment.obtainedMarks}/{assignment.maxMarks}
+                                </span>
+                             )}
+                          </div>
+                          <button
+                            onClick={() => setExpandedId(isExpanded ? null : assignment.id)}
+                            className="flex items-center gap-1 text-[11px] font-bold uppercase tracking-widest text-primary hover:text-primary/80 transition-colors"
+                          >
+                            {isExpanded ? "Collapse" : "Open Details"}
+                            <ChevronDown className={`h-3 w-3 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""}`} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
