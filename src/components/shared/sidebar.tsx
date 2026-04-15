@@ -21,7 +21,7 @@ import {
   ShieldCheck,
   Settings,
 } from "lucide-react";
-import { useAuthStore } from "@/lib/store";
+import { useAuthStore, useCollegeStore } from "@/lib/store";
 import { useRouter } from "next/navigation";
 
 const baseNav = [
@@ -46,6 +46,7 @@ export function Sidebar() {
   
   // Use mock auth state
   const { role, logout } = useAuthStore();
+  const { name, shortName } = useCollegeStore();
 
   function handleLogout() {
     logout();
@@ -71,7 +72,7 @@ export function Sidebar() {
           <GraduationCap className="h-5 w-5 text-primary" />
         </div>
         <span className="text-lg font-bold tracking-tight">
-          College<span className="text-primary">Hub</span>
+          {shortName}<span className="text-primary">Hub</span>
         </span>
       </div>
 

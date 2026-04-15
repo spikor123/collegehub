@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   ShieldCheck,
   Users,
@@ -10,13 +11,28 @@ import {
   AlertTriangle,
   CheckCircle2,
   MoreVertical,
+  Building2,
+  Image as ImageIcon,
+  Type,
+  MapPin,
+  Save,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { useAuthStore } from "@/lib/store";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { useAuthStore, useCollegeStore } from "@/lib/store";
 
 export default function AdminPage() {
   const { role } = useAuthStore();
+  const college = useCollegeStore();
+  
+  // Local state for editing
+  const [clgName, setClgName] = useState(college.name);
+  const [clgShort, setClgShort] = useState(college.shortName);
+  const [clgTag, setClgTag] = useState(college.tagline);
+  const [clgLogo, setClgLogo] = useState(college.logo);
+  const [clgLoc, setClgLoc] = useState(college.location);
 
   if (role !== "admin") {
     return (
@@ -30,12 +46,77 @@ export default function AdminPage() {
     );
   }
 
+  const handleUpdate = () => {
+    college.updateDetails({
+      name: clgName,
+      shortName: clgShort,
+      tagline: clgTag,
+      logo: clgLogo,
+      location: clgLoc
+    });
+    alert("College branding updated successfully!");
+  };
+
   return (
-    <div className="space-y-6 animate-in">
+    <div className="space-y-6 animate-in pb-10">
       <div>
         <h1 className="text-2xl font-bold tracking-tight">Admin Dashboard</h1>
-        <p className="text-sm text-muted-foreground">System overview, metrics, and configuration.</p>
+        <p className="text-sm text-muted-foreground">System metrics and institution-wide configuration.</p>
       </div>
+
+      {/* College Customization Section */}
+      <Card className="border-border/50 bg-gradient-to-br from-card to-primary/5">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-primary" />
+            Institution Customization
+          </CardTitle>
+          <CardDescription>Update your college branding attributes across the entire application.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                   <Building2 className="h-3.5 w-3.5" /> Full Name
+                </Label>
+                <Input value={clgName} onChange={(e) => setClgName(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                   <Type className="h-3.5 w-3.5" /> Short Name (for Sidebar)
+                </Label>
+                <Input value={clgShort} onChange={(e) => setClgShort(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                   <Sparkles className="h-3.5 w-3.5" /> Tagline
+                </Label>
+                <Input value={clgTag} onChange={(e) => setClgTag(e.target.value)} />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                   <ImageIcon className="h-3.5 w-3.5" /> Logo URL
+                </Label>
+                <Input value={clgLogo} onChange={(e) => setClgLogo(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2">
+                   <MapPin className="h-3.5 w-3.5" /> Location
+                </Label>
+                <Input value={clgLoc} onChange={(e) => setClgLoc(e.target.value)} />
+              </div>
+              <div className="pt-8">
+                <Button className="w-full gap-2" onClick={handleUpdate}>
+                   <Save className="h-4 w-4" /> Save Global Changes
+                </Button>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card className="border-border/50">

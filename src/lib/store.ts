@@ -25,3 +25,30 @@ export const useAuthStore = create<AuthState>()(
     }
   )
 );
+
+interface CollegeState {
+  name: string;
+  shortName: string;
+  tagline: string;
+  logo: string;
+  primaryColor: string;
+  location: string;
+  updateDetails: (details: Partial<Omit<CollegeState, "updateDetails">>) => void;
+}
+
+export const useCollegeStore = create<CollegeState>()(
+  persist(
+    (set) => ({
+      name: "Indian Institute of Science & Tech",
+      shortName: "IIST",
+      tagline: "Empowering Future Innovators",
+      logo: "https://images.unsplash.com/photo-1592280733791-6981186e000e?q=80&w=2670&auto=format&fit=crop",
+      primaryColor: "#8b5cf6",
+      location: "Bangalore, India",
+      updateDetails: (details) => set((state) => ({ ...state, ...details })),
+    }),
+    {
+      name: "collegehub-settings",
+    }
+  )
+);
