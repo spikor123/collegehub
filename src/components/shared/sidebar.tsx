@@ -56,6 +56,9 @@ export function Sidebar() {
 
   // Define role specific navigation
   const roleNav = [];
+  if (role === "student") {
+    roleNav.push({ label: "My Attendance", href: "/attendance", icon: CheckSquare });
+  }
   if (role === "teacher" || role === "admin") {
     roleNav.push({ label: "Attendance", href: "/attendance", icon: CheckSquare });
     roleNav.push({ label: "Student Data", href: "/students", icon: Users });
