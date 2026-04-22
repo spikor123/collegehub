@@ -4,9 +4,11 @@ import { GraduationCap, Bell, Search, Moon, Sun } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import Link from "next/link";
+import { useCollegeStore } from "@/lib/store";
 
 export function TopBar() {
   const { theme, setTheme } = useTheme();
+  const { banner } = useCollegeStore();
 
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-border bg-card/80 px-4 backdrop-blur-xl lg:px-6">
@@ -20,8 +22,19 @@ export function TopBar() {
         </span>
       </Link>
 
-      {/* Desktop: Page title area */}
-      <div className="hidden lg:block" />
+      {/* Dynamic College Banner Section */}
+      <div className="hidden lg:flex flex-1 items-center justify-center px-8 h-full">
+        <div className="relative w-full max-w-2xl h-10 overflow-hidden rounded-xl border border-border/50 bg-accent/5 group transition-all hover:bg-accent/10">
+          <img 
+            src={banner} 
+            alt="College Banner" 
+            className="w-full h-full object-cover opacity-80 transition-opacity group-hover:opacity-100"
+          />
+          {/* Subtle vignette/fade for professional look */}
+          <div className="absolute inset-0 bg-gradient-to-r from-card via-transparent to-card pointer-events-none opacity-40" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-primary/20 to-transparent" />
+        </div>
+      </div>
 
       {/* Right actions */}
       <div className="flex items-center gap-1">

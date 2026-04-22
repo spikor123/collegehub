@@ -35,14 +35,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { cn } from "@/lib/utils";
 
 type Priority = "urgent" | "important" | "normal";
+type NoticeCategory = "official" | "activity" | "club" | "market";
 
 interface Notice {
   id: string;
   title: string;
   body: string;
   priority: Priority;
+  category: NoticeCategory;
   is_pinned: boolean;
   author: string;
   department: string;
@@ -52,6 +55,13 @@ interface Notice {
   tags: string[];
   attachmentUrl?: string;
   attachmentName?: string;
+  // Design features for "one-page" student notices
+  design?: {
+    background?: string; // Hex or gradient
+    backgroundImage?: string;
+    textColor?: string;
+    textAlign?: "left" | "center" | "right";
+  };
 }
 
 const initialNotices: Notice[] = [
@@ -60,6 +70,7 @@ const initialNotices: Notice[] = [
     title: "Mid-Semester Examination Schedule — April 2026",
     body: "The mid-semester examinations for all branches will commence from April 28, 2026. Students are advised to collect their hall tickets from the examination cell by April 25. Seating arrangement will be published on the notice board by April 26.",
     priority: "urgent",
+    category: "official",
     is_pinned: true,
     author: "Dr. Priya Sharma",
     department: "Examination Cell",
@@ -71,17 +82,40 @@ const initialNotices: Notice[] = [
     attachmentUrl: "#",
   },
   {
-    id: "2",
-    title: "Workshop on AI/ML & Generative AI — Registration Open",
-    body: "The Department of Computer Science is organizing a 3-day workshop on Artificial Intelligence, Machine Learning, and Generative AI from May 5–7, 2026. Industry experts from Google and Microsoft will be conducting sessions. Limited seats available — register now.",
+    id: "flyer-1",
+    title: "🚀 HACKATHON 2026: Code for the Future",
+    body: "Ready to build the next big thing? Join us for 48 hours of non-stop innovation, energy, and caffeine! \n\n• Location: Main Auditorium\n• Prizes: ₹50,000 pool\n• Registration: Ends Friday\n\nOpen to all branches. Team of 3 members required.",
     priority: "important",
-    is_pinned: true,
-    author: "Prof. Rahul Verma",
-    department: "CSE Department",
-    created_at: "5 hours ago",
-    views: 612,
-    comments: 45,
-    tags: ["Workshop", "CSE", "AI/ML"],
+    category: "activity",
+    is_pinned: false,
+    author: "@tech_club",
+    department: "Tech Club",
+    created_at: "1 hour ago",
+    views: 1240,
+    comments: 12,
+    tags: ["Hackathon", "Coding"],
+    design: {
+      background: "bg-gradient-to-br from-indigo-500/15 to-purple-500/15",
+      textAlign: "center",
+    }
+  },
+  {
+    id: "flyer-2",
+    title: "🎨 RHYTHM 2026: Cultural Extravaganza",
+    body: "Experience the magic of art, dance, and music! Registration forms for the annual cultural fest are now available at the Student Union office.\n\nDon't miss out on the biggest event of the year!",
+    priority: "normal",
+    category: "activity",
+    is_pinned: false,
+    author: "@cultural_comm",
+    department: "Cultural Committee",
+    created_at: "3 hours ago",
+    views: 3105,
+    comments: 89,
+    tags: ["Fest", "Cultural"],
+    design: {
+      background: "bg-gradient-to-br from-rose-500/15 to-orange-500/15",
+      textAlign: "center",
+    }
   },
 ];
 
@@ -112,7 +146,7 @@ const priorityConfig = {
   },
 };
 
-const filters = ["All", "Urgent", "Important", "General", "Pinned"];
+const filters = ["All", "Official", "Activities", "Clubs", "Pinned"];
 
 export default function NoticesPage() {
   const { role } = useAuthStore();
@@ -127,7 +161,13 @@ export default function NoticesPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newBody, setNewBody] = useState("");
   const [newPriority, setNewPriority] = useState<Priority>("normal");
+  const [newCategory, setNewCategory] = useState<NoticeCategory>("activity");
   const [selectedPdf, setSelectedPdf] = useState<File | null>(null);
+
+  // Design State
+  const [designBg, setDesignBg] = useState("bg-card");
+  const [designAlign, setDesignAlign] = useState<"left" | "center" | "right">("left");
+  const [showDesignPanel, setShowDesignPanel] = useState(false);
 
   const filteredNotices = notices.filter((notice) => {
     const matchesSearch =
@@ -139,12 +179,9 @@ export default function NoticesPage() {
 
     if (activeFilter === "All") return matchesSearch;
     if (activeFilter === "Pinned") return notice.is_pinned && matchesSearch;
-    if (activeFilter === "Urgent")
-      return notice.priority === "urgent" && matchesSearch;
-    if (activeFilter === "Important")
-      return notice.priority === "important" && matchesSearch;
-    if (activeFilter === "General")
-      return notice.priority === "normal" && matchesSearch;
+    if (activeFilter === "Official") return notice.category === "official" && matchesSearch;
+    if (activeFilter === "Activities") return notice.category === "activity" && matchesSearch;
+    if (activeFilter === "Clubs") return notice.category === "club" && matchesSearch;
     return matchesSearch;
   });
 
@@ -159,16 +196,21 @@ export default function NoticesPage() {
       id: Math.random().toString(36).substr(2, 9),
       title: newTitle,
       body: newBody,
-      priority: newPriority,
+      priority: role === "student" ? "normal" : newPriority,
+      category: role === "student" ? "activity" : newCategory,
       is_pinned: false,
-      author: "You (Dean/Faculty)",
-      department: "Administration",
+      author: role === "student" ? "@student_user" : "Faculty Admin",
+      department: role === "student" ? "Student Activity" : "Official",
       created_at: "Just now",
       views: 0,
       comments: 0,
-      tags: ["Official", "New"],
+      tags: role === "student" ? ["StudentActivity"] : ["Official"],
       attachmentName: selectedPdf?.name,
       attachmentUrl: selectedPdf ? "#" : undefined,
+      design: {
+        background: designBg,
+        textAlign: designAlign,
+      }
     };
 
     setNotices([newNotice, ...notices]);
@@ -191,20 +233,22 @@ export default function NoticesPage() {
           </p>
         </div>
 
-        {/* Post Notice restricted to Faculty/Admin */}
-        {(role === "teacher" || role === "admin") && (
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-1.5 active-scale">
-                <Plus className="h-4 w-4" />
-                Post Notice
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px]">
+        {/* Post Notice available to all roles (context-aware labels) */}
+        {(role === "student" || role === "teacher" || role === "admin") && (
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="gap-1.5 active-scale">
+              <Plus className="h-4 w-4" />
+              {role === "student" ? "Design Notice" : "Post Notice"}
+            </Button>
+          </DialogTrigger>
+            <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
               <DialogHeader>
-                <DialogTitle>Broadcast New Notice</DialogTitle>
+                <DialogTitle>{role === "student" ? "Create Student Activity Notice" : "Broadcast Official Notice"}</DialogTitle>
                 <DialogDescription>
-                  This announcement will be pinned to the dashboard and sent via push notifications to all students.
+                  {role === "student" 
+                    ? "Design a vibrant flyer for your club or activity. This will be visible in the Activities section."
+                    : "This announcement will be pinned to the dashboard and sent via push notifications."}
                 </DialogDescription>
               </DialogHeader>
               <form onSubmit={handlePostNotice} className="space-y-4 py-4">
@@ -228,21 +272,84 @@ export default function NoticesPage() {
                   />
                 </div>
                 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Priority Level</Label>
-                    <select 
-                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
-                      value={newPriority}
-                      onChange={(e) => setNewPriority(e.target.value as Priority)}
+                {/* Design Section (Always available for Students, Optional for Faculty) */}
+                <div className="rounded-xl border border-border/50 bg-accent/5 p-4 space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label className="flex items-center gap-2 font-bold"><Sparkles className="h-3.5 w-3.5 text-primary" /> Visual Design</Label>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setShowDesignPanel(!showDesignPanel)}
+                      className="h-7 text-[10px] uppercase font-bold tracking-wider"
+                      type="button"
                     >
-                      <option value="normal">General</option>
-                      <option value="important">Important</option>
-                      <option value="urgent">Urgent</option>
-                    </select>
+                      {showDesignPanel ? "Hide Designing" : "Start Designing"}
+                    </Button>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Attach PDF (Optional)</Label>
+                  
+                  {showDesignPanel && (
+                    <div className="grid grid-cols-1 gap-4 animate-in">
+                      <div className="space-y-2">
+                         <Label className="text-xs">Background Style</Label>
+                         <div className="flex flex-wrap gap-2">
+                           {[
+                             { id: "bg-card", label: "Clean" },
+                             { id: "bg-gradient-to-br from-indigo-500/10 to-purple-500/10", label: "Indigo" },
+                             { id: "bg-gradient-to-br from-emerald-500/10 to-teal-500/10", label: "Teal" },
+                             { id: "bg-gradient-to-br from-rose-500/10 to-orange-500/10", label: "Sunset" },
+                             { id: "bg-gradient-to-br from-amber-500/10 to-yellow-500/10", label: "Warm" },
+                           ].map((bg) => (
+                             <button
+                               key={bg.id}
+                               type="button"
+                               onClick={() => setDesignBg(bg.id)}
+                               className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-all ${
+                                 designBg === bg.id ? "border-primary bg-primary/20 text-primary" : "border-border hover:bg-accent"
+                               }`}
+                             >
+                               {bg.label}
+                             </button>
+                           ))}
+                         </div>
+                      </div>
+                      <div className="space-y-2">
+                         <Label className="text-xs">Text Alignment</Label>
+                         <div className="flex gap-2">
+                           {(["left", "center", "right"] as const).map((a) => (
+                             <button
+                               key={a}
+                               type="button"
+                               onClick={() => setDesignAlign(a)}
+                               className={`px-4 py-1.5 rounded-lg border text-[10px] font-bold capitalize transition-all ${
+                                 designAlign === a ? "border-primary bg-primary/20 text-primary" : "border-border hover:bg-accent"
+                               }`}
+                             >
+                               {a}
+                             </button>
+                           ))}
+                         </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  {role !== "student" && (
+                    <div className="space-y-2">
+                      <Label>Priority Level</Label>
+                      <select 
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        value={newPriority}
+                        onChange={(e) => setNewPriority(e.target.value as Priority)}
+                      >
+                        <option value="normal">General</option>
+                        <option value="important">Important</option>
+                        <option value="urgent">Urgent</option>
+                      </select>
+                    </div>
+                  )}
+                  <div className="space-y-2 col-span-2 sm:col-span-1">
+                    <Label>Attachment (PDF)</Label>
                     <div className="relative group">
                        <Input 
                         type="file" 
@@ -250,9 +357,9 @@ export default function NoticesPage() {
                         className="opacity-0 absolute inset-0 cursor-pointer z-10"
                         onChange={(e) => setSelectedPdf(e.target.files?.[0] || null)}
                        />
-                       <Button variant="outline" type="button" className="w-full gap-2 text-xs">
+                       <Button variant="outline" type="button" className="w-full h-10 gap-2 text-xs">
                           {selectedPdf ? <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" /> : <Upload className="h-3.5 w-3.5" />}
-                          {selectedPdf ? selectedPdf.name : "Select PDF Document"}
+                          {selectedPdf ? selectedPdf.name : "Choose File"}
                        </Button>
                     </div>
                   </div>
@@ -309,7 +416,11 @@ export default function NoticesPage() {
           return (
             <Card
               key={notice.id}
-              className={`border-border/50 overflow-hidden transition-all duration-300 hover:border-border hover:shadow-xl hover:shadow-primary/5 ${config.border} bg-card/60`}
+              className={cn(
+                "border-border/50 overflow-hidden transition-all duration-300 hover:border-border hover:shadow-xl hover:shadow-primary/5",
+                config.border,
+                notice.design?.background || "bg-card/60"
+              )}
               style={{
                 animationDelay: `${idx * 60}ms`,
                 animation: "animate-in 0.4s ease-out both",
@@ -317,13 +428,27 @@ export default function NoticesPage() {
             >
               <CardContent className="p-0">
                 <div className="flex items-start">
-                   {/* Left priority accent */}
-                   <div className={`w-1 self-stretch ${config.bg.replace('/10', '')}`} />
+                   {/* Left priority accent — only for official notices */}
+                   {notice.category === "official" && (
+                    <div className={`w-1 self-stretch ${config.bg.replace('/10', '')}`} />
+                   )}
                    
-                   <div className="flex-1 p-4">
-                    <div className="flex items-start gap-4">
+                   <div className={cn(
+                     "flex-1 p-4",
+                     notice.design?.textAlign === "center" && "text-center",
+                     notice.design?.textAlign === "right" && "text-right"
+                   )}>
+                    <div className={cn(
+                      "flex items-start gap-4",
+                      notice.design?.textAlign === "center" && "flex-col items-center text-center",
+                      notice.design?.textAlign === "right" && "flex-row-reverse"
+                    )}>
                       {/* Icon */}
-                      <div className={`mt-1 flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl ${config.bg} border border-${config.color.replace('text-', '')}/20`}>
+                      <div className={cn(
+                        "flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl border transition-all",
+                        config.bg,
+                        `border-${config.color.replace('text-', '')}/20`
+                      )}>
                         {notice.is_pinned ? (
                           <Pin className={`h-5 w-5 ${config.color}`} />
                         ) : (
@@ -332,31 +457,37 @@ export default function NoticesPage() {
                       </div>
 
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-start justify-between gap-4">
+                        <div className={cn(
+                          "flex items-start justify-between gap-4",
+                          notice.design?.textAlign === "center" && "flex-col items-center"
+                        )}>
                           <button
                             onClick={() => setExpandedId(isExpanded ? null : notice.id)}
                             className="text-left group"
                           >
-                            <h3 className="text-base font-bold leading-snug group-hover:text-primary transition-colors">
+                            <h3 className={cn(
+                               "text-base font-bold leading-snug group-hover:text-primary transition-colors",
+                               notice.design?.textAlign === "center" && "text-center"
+                            )}>
                               {notice.title}
                             </h3>
                           </button>
                           
                           <div className="flex shrink-0 items-center gap-2">
-                            {notice.is_pinned && (
-                              <span className="flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary uppercase tracking-wider">
-                                <Pin className="h-2.5 w-2.5" />
-                                Pinned
-                              </span>
-                            )}
-                            <span className={`rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider ${config.badge}`}>
-                              {config.label}
-                            </span>
+                             <span className={cn(
+                                "rounded-full border px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                                config.badge
+                             )}>
+                               {notice.category === "official" ? config.label : notice.category.toUpperCase()}
+                             </span>
                           </div>
                         </div>
 
                         {/* Metadata */}
-                        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground font-semibold">
+                        <div className={cn(
+                          "mt-2 flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] text-muted-foreground font-semibold",
+                          notice.design?.textAlign === "center" && "justify-center"
+                        )}>
                           <span className="flex items-center gap-1.5">
                             <User className="h-3.5 w-3.5" />
                             {notice.author}
@@ -372,7 +503,11 @@ export default function NoticesPage() {
 
                         {/* Body (Expandable) */}
                         <div className={`overflow-hidden transition-all duration-300 ${isExpanded ? "max-h-96 mt-4 opacity-100" : "max-h-0 opacity-0"}`}>
-                          <div className="p-4 bg-accent/20 rounded-xl border border-border/50">
+                          <div className={cn(
+                            "p-4 bg-accent/20 rounded-xl border border-border/50",
+                            notice.design?.textAlign === "center" && "text-center",
+                            notice.design?.textAlign === "right" && "text-right"
+                          )}>
                              <p className="text-sm leading-relaxed text-muted-foreground whitespace-pre-line">
                                {notice.body}
                              </p>

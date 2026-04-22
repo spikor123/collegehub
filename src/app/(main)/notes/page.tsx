@@ -288,6 +288,7 @@ export default function NotesPage() {
             )}
           </DialogContent>
         </Dialog>
+        )}
       </div>
 
       {/* Search */}

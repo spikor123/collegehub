@@ -27,9 +27,17 @@ A secure, campus-only marketplace for buying and selling textbooks, gadgets, and
 A platform for students to voice their opinions on campus decisions with verified, anonymous voting.
 
 ### 👩‍🏫 Faculty & Admin Portals
-- **Attendance Management:** Digital registers for teachers.
+- **Attendance Management:** Modern, high-contrast digital registers with progress tracking for students and quick-marking tools for teachers.
 - **Student Data:** Secure directory with academic metrics.
-- **Admin Dashboard:** System-wide controls and audit logs.
+- **Admin Dashboard:** System-wide controls, banner customization, and audit logs.
+
+### 🔔 Integrated Notifications
+A unified notification system using the Web Notification API for real-time alerts on notices, assignments, and campus events.
+
+---
+
+## 🗺️ Roadmap
+For a detailed look at upcoming features and technical priorities, please refer to the **[FUTURE_FEATURES.md](./FUTURE_FEATURES.md)** file.
 
 ---
 

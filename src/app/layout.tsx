@@ -13,13 +13,20 @@ export const metadata: Metadata = {
   description:
     "The complete digital ecosystem for your college. Notices, events, notes, marketplace, and more.",
   manifest: "/collegehub/manifest.json",
-  themeColor: "#8b5cf6",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=0, viewport-fit=cover",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
     title: "CollegeHub",
   },
+};
+
+export const viewport = {
+  themeColor: "#8b5cf6",
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: 0,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({

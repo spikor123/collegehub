@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { useTheme } from "next-themes";
+import { NotificationService } from "@/lib/notifications";
+import { useEffect, useState } from "react";
 
 const profileData = {
   name: "Anirban Das",
@@ -63,7 +65,15 @@ const recentActivity = [
 ];
 
 export default function ProfilePage() {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+
+  useEffect(() => {
+    // Check initial permission on mount
+    if (NotificationService.getPermission() === "granted") {
+      setNotificationsEnabled(true);
+    }
+  }, []);
 
   return (
     <div className="space-y-6 animate-in">
@@ -222,17 +232,17 @@ export default function ProfilePage() {
             {
               label: "Dark Mode",
               description: "Toggle dark/light appearance",
-              icon: theme === "dark" ? Moon : Sun,
+              icon: resolvedTheme === "dark" ? Moon : Sun,
               action: (
                 <button
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
+                  onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
                   className={`relative h-6 w-11 rounded-full transition-colors ${
-                    theme === "dark" ? "bg-primary" : "bg-muted"
+                    resolvedTheme === "dark" ? "bg-primary" : "bg-muted"
                   }`}
                 >
                   <div
                     className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
-                      theme === "dark" ? "translate-x-5" : "translate-x-0.5"
+                      resolvedTheme === "dark" ? "translate-x-5" : "translate-x-0.5"
                     }`}
                   />
                 </button>
@@ -243,9 +253,28 @@ export default function ProfilePage() {
               description: "Get notified about important updates",
               icon: Bell,
               action: (
-                <div className="relative h-6 w-11 rounded-full bg-primary transition-colors">
-                  <div className="absolute top-0.5 h-5 w-5 translate-x-5 rounded-full bg-white shadow" />
-                </div>
+                <button
+                  onClick={async () => {
+                    if (notificationsEnabled) {
+                      setNotificationsEnabled(false);
+                    } else {
+                      const permission = await NotificationService.requestPermission();
+                      if (permission === "granted") {
+                        setNotificationsEnabled(true);
+                        NotificationService.sendWelcome();
+                      }
+                    }
+                  }}
+                  className={`relative h-6 w-11 rounded-full transition-colors ${
+                    notificationsEnabled ? "bg-primary" : "bg-muted"
+                  }`}
+                >
+                  <div
+                    className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform ${
+                      notificationsEnabled ? "translate-x-5" : "translate-x-0.5"
+                    }`}
+                  />
+                </button>
               ),
             },
             {

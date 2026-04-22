@@ -47,6 +47,7 @@ export default function AdminPage() {
   const [clgShort, setClgShort] = useState(college.shortName);
   const [clgTag, setClgTag] = useState(college.tagline);
   const [clgLogo, setClgLogo] = useState(college.logo);
+  const [clgBanner, setClgBanner] = useState(college.banner);
   const [clgLoc, setClgLoc] = useState(college.location);
   const [auditFilter, setAuditFilter] = useState<AuditSeverity | "all">("all");
 
@@ -69,6 +70,7 @@ export default function AdminPage() {
       shortName: clgShort,
       tagline: clgTag,
       logo: clgLogo,
+      banner: clgBanner,
       location: clgLoc,
     });
     logAudit({
@@ -155,6 +157,10 @@ export default function AdminPage() {
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><ImageIcon className="h-3.5 w-3.5" /> Logo URL</Label>
                 <Input value={clgLogo} onChange={(e) => setClgLogo(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label className="flex items-center gap-2"><ImageIcon className="h-3.5 w-3.5" /> Banner URL</Label>
+                <Input value={clgBanner} onChange={(e) => setClgBanner(e.target.value)} />
               </div>
               <div className="space-y-2">
                 <Label className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" /> Location</Label>
